@@ -14,15 +14,20 @@ std::unique_ptr<Statement> Parser::parse()
 	Tokenizer::printTokens(_tokens);
 
 	// Get statement type
-	const std::string keyword = expect(TokenType::KEYWORD).value;
-	if (keyword == "CREATE")
+
+	if (match(TokenType::KEYWORD, "CREATE"))
 	{
 		return std::make_unique<CreateStatement>(parseCreateStatement());
 	}
-	else
+	
+	if (match(TokenType::KEYWORD, "INSERT"))
 	{
-		throw std::invalid_argument("Syntax Error Near " + keyword);
+		return std::make_unique<InsertStatement>(parseInsertStatement());
+
 	}
+
+	throw std::runtime_error("Syntax Error: Unexpected token " + peek().value + ".");
+
 }
 
 
@@ -41,60 +46,147 @@ CreateStatement Parser::parseCreateStatement()
 
 	expect(TokenType::PUNCTUATION, "(");
 
-	std::string currColumnName = expect(TokenType::IDENTIFIER).value;
-	std::string currTypeStr = expect(TokenType::IDENTIFIER).value;
-	resultStatement.columnsData.emplace_back(currColumnName, currTypeStr);
-
-	bool rightParenthesessFound = false;
-	while (_pos < _tokens.size())
+	while (true)
 	{
-		const std::string nextPunct = expect(TokenType::PUNCTUATION).value;
-		if (nextPunct == ")")
-		{
-			rightParenthesessFound = true;
-			break;
-		}
-		else if (nextPunct != ",")
-		{
-			throw std::runtime_error("Syntax error near " + nextPunct + ".");
-		}
-
 		std::string currColumnName = expect(TokenType::IDENTIFIER).value;
 		std::string currTypeStr = expect(TokenType::IDENTIFIER).value;
 		resultStatement.columnsData.emplace_back(currColumnName, currTypeStr);
+
+		if (!match(TokenType::PUNCTUATION, ","))
+		{
+			break;
+		}
+
+		if (peek().value == ")")
+		{
+			throw std::runtime_error("Error syntax: Trailing comma found before ')', eg: (name TEXT, )");
+		}
 	}
 
-	if (!rightParenthesessFound)
+	expect(TokenType::PUNCTUATION, ")");
+
+	return resultStatement;
+}
+
+
+/*
+Function to parse an insert query
+input: none
+output: insert statement
+*/
+InsertStatement Parser::parseInsertStatement()
+{
+	InsertStatement resultStatement;
+
+	expect(TokenType::KEYWORD, "INTO");
+
+	resultStatement.tableName = expect(TokenType::IDENTIFIER).value;
+
+	expect(TokenType::IDENTIFIER, "VALUES");
+	expect(TokenType::PUNCTUATION, "(");
+
+
+	while (true)
 	{
-		throw std::runtime_error("Syntax error, no right ) found.");
+		resultStatement.values.emplace_back(resolveData(expect(TokenType::LITERAL)));
+
+		if (!match(TokenType::PUNCTUATION, ","))
+		{
+			break;
+		}
+
+		if (peek().value == ")")
+		{
+			throw std::runtime_error("Error syntax: Trailing comma found before ')', eg: (name TEXT, )");
+		}
 	}
+
+	expect(TokenType::PUNCTUATION, ")");
 
 	return resultStatement;
 }
 
 /*
-Helper function, checks if token at current position matches a type and value.
+Returns current token without consuming it
+input: none
+output: tail of tokens (current token)
+*/
+Token Parser::peek()
+{
+	if (_pos >= _tokens.size())
+	{
+		return Token(TokenType::END_OF_QUERY, "");
+	}
+
+	return _tokens[_pos];
+}
+
+/*
+Advances position and returns token at new position
+input: none
+output: token at next position
+*/
+Token Parser::consume()
+{
+	Token token = peek();
+
+	if (token.type != TokenType::END_OF_QUERY)
+	{
+		_pos++;
+	}
+
+	return token;
+}
+
+/*
+Returns optional of token at next position
+input: type of token, value of token (not required)
+output: optional of token
+*/
+std::optional<Token> Parser::match(TokenType type, std::string value)
+{
+	Token token = peek();
+
+	if (token.type == type && (value.empty() || token.value == value))
+	{
+		return consume();
+	}
+
+	return std::nullopt;
+}
+
+/*
+Helper function, consumes token and matches a type and value.
 returns token if matches, raises error if it doesnt
 input: type and value of matched token
 output: token if matched
 */
-Token Parser::expect(TokenType type, std::optional<std::string> value)
+Token Parser::expect(TokenType type, std::string value)
 {
-	const Token& currToken = _tokens[_pos];
+	auto token = match(type, value);
 
-	if (type != currToken.type)
+	if (token)
 	{
-		throw std::runtime_error("Unexpected token type, expected " + Tokenizer::getTokenTypeName(type)
-			+ " got " + Tokenizer::getTokenTypeName(currToken.type) + " instead.");
+		return *token;
 	}
 
-	if (value && *value != currToken.value)
-	{
-		throw std::runtime_error("Unexpected token value, expected " + *value + " got " + currToken.value + " instead.");
-	}
-
-	_pos++;
-	return currToken;
+	throw std::runtime_error("Syntax Error: expected " + value + " got " + peek().value + " .");
 }
 
 
+/*
+Returns Data (int or std::string) from str representation.
+input: str literal
+*/
+static Data resolveData(const Token& literalToken)
+{
+	char firstChar = literalToken.value[0];
+
+	if (firstChar == '-' || std::isdigit(firstChar))
+	{
+		return std::stoi(literalToken.value);
+	}
+
+	// after we validate type we can remove quotes
+	return literalToken.value.substr(1, literalToken.value.size() - 2);
+}

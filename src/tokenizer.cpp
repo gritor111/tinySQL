@@ -13,7 +13,7 @@ std::vector<Token> Tokenizer::tokenize()
 {
 	std::vector<Token> tokens = {};
 
-	while (_pos < _query.length())
+	while (_pos < _query.size())
 	{
 		char currChar = _query[_pos];
 
@@ -24,8 +24,23 @@ std::vector<Token> Tokenizer::tokenize()
 			continue;
 		}
 
-		// Check for keywords and identifiers
-		if (std::isalpha(currChar))
+		// check for literals (int and string)
+		if (currChar == '-')
+		{
+			if (_pos + 1 < _query.size() && std::isdigit(_query[_pos + 1]))
+			{
+				tokens.emplace_back(TokenType::LITERAL, consumeIntLiteral());
+			}
+		}
+		else if (std::isdigit(currChar))
+		{
+			tokens.emplace_back(TokenType::LITERAL, consumeIntLiteral());
+		}
+		else if (currChar == '\'' || currChar == '"')
+		{
+			tokens.emplace_back(TokenType::LITERAL, consumeStringLiteral(currChar));
+		}
+		else if (std::isalpha(currChar)) // Check for keywords and identifierss
 		{
 			std::string word = consumeWord();
 			std::string upperWord = word;
@@ -47,7 +62,7 @@ std::vector<Token> Tokenizer::tokenize()
 		}
 		else
 		{
-			tokens.emplace_back(TokenType::SYMBOL, std::string(1, currChar));
+			tokens.emplace_back(TokenType::UNKOWN, std::string(1, currChar));
 			_pos++;
 		}
 	}
@@ -62,15 +77,65 @@ output: string of word
 */
 std::string Tokenizer::consumeWord()
 {
-	size_t start = _pos;
+	const size_t start = _pos;
 
-	while (_pos < _query.length() && std::isalpha(_query[_pos]))
+	while (_pos < _query.size() && std::isalpha(_query[_pos]))
 	{
 		_pos++;
 	}
 
 	return _query.substr(start, _pos - start);
 }
+
+/*
+Consumes a signed int literal.
+input: none
+output: string of integer
+*/
+std::string Tokenizer::consumeIntLiteral()
+{
+	const size_t start = _pos;
+
+	if (_query[start] == '-')
+	{
+		_pos++;
+	}
+
+	while (_pos < _query.size() && std::isdigit(_query[_pos]))
+	{
+		_pos++;
+	}
+
+	return _query.substr(start, _pos - start);
+}
+
+
+/*
+Consumes a string literal ('example123' or "example123")
+input: quote of the literal, either single or double
+output: string of literal including quotes
+*/
+std::string Tokenizer::consumeStringLiteral(const char quoteType)
+{
+	const size_t start = _pos;
+	_pos++; // skip opening quote
+
+	while (_pos < _query.size() && _query[_pos] != quoteType)
+	{
+		_pos++;
+	}
+
+	if (_pos >= _query.size())
+	{
+		throw std::runtime_error("Unterminated string literal.");
+	}
+
+	_pos++; // skip closing quote
+	std::string literal = _query.substr(start, _pos - start);
+
+	return literal;
+}
+
 
 /*
 Helper function to get TokenType string from type.
@@ -85,14 +150,12 @@ std::string Tokenizer::getTokenTypeName(TokenType type)
         return "KEYWORD";
     case TokenType::IDENTIFIER:
         return "IDENTIFIER";
-    case TokenType::NUMBER_LITERAL:
-        return "NUMBER";
+    case TokenType::LITERAL:
+        return "LITERAL";
     case TokenType::OPERATOR:
         return "OPERATOR";
     case TokenType::PUNCTUATION:
         return "PUNCTUATION";
-	case TokenType::SYMBOL:
-		return "SYMBOL";
     default:
         return "UNDEFINED";
     }

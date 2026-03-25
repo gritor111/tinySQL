@@ -20,7 +20,9 @@ class Table
 {
 public:
 	void addColumn(const std::string& name, ColumnType type);
+	void addRow(const std::vector<Data>& row);
 	size_t getRowsCount() const;
+	std::vector<Column> getColumns() const;
 
 private:
 	const std::string _name;
@@ -37,7 +39,9 @@ public:
 	Database(const std::string& name) : name(name)
 	{
 	}
+
 	void addTable(const std::string& tableName, const Table& table);
+	Table& getTable(const std::string& tableName);
 };
 
 

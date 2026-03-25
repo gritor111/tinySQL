@@ -30,6 +30,16 @@ void Table::addColumn(const std::string& name, ColumnType type)
 	_columns.emplace_back(Column{ name, type });
 }
 
+/*
+Adds a row to the table.
+input: vector of data
+output: none
+*/
+void Table::addRow(const std::vector<Data>& row)
+{
+	_rows.emplace_back(row);
+}
+
 
 /*
 Function that gets how many rows the table has.
@@ -39,6 +49,11 @@ output: count of rows in table
 size_t Table::getRowsCount() const
 {
 	return _rows.size();
+}
+
+std::vector<Column> Table::getColumns() const
+{
+	return _columns;
 }
 
 
@@ -51,4 +66,21 @@ void Database::addTable(const std::string& tableName, const Table& table)
 	{
 		throw std::runtime_error("Error: table with name '" + tableName + "' already exists.");
 	}
+}
+
+
+/*
+Returns table struct given a name, nullopt if doesnt exist
+input: name of table
+output: optional table
+*/
+Table& Database::getTable(const std::string& tableName)
+{
+	auto it = _tables.find(tableName);
+	if (it == _tables.end())
+	{
+		throw std::runtime_error("Table not found: " + tableName + '.');
+	}
+
+	return it->second;
 }

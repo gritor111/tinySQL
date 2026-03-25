@@ -21,4 +21,5 @@ private:
 	Database _db;
 
 	void executeCreateStatement(const CreateStatement& statement);
+	void executeInsertStatement(const InsertStatement& statement);
 };

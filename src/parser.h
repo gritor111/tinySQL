@@ -4,12 +4,14 @@
 #include <vector>
 #include <exception>
 #include <optional>
+#include <string>
 
 #include "tokenizer.h"
 #include "table.h"
 
 enum StatementType {
 	CREATE,
+	INSERT
 };
 
 struct Statement
@@ -31,6 +33,16 @@ struct CreateStatement : Statement
 	}
 };
 
+struct InsertStatement : Statement
+{
+	std::string tableName;
+	std::vector<Data> values;
+
+	InsertStatement() : Statement(StatementType::INSERT)
+	{
+	}
+};
+
 class Parser
 {
 public:
@@ -42,7 +54,13 @@ private:
 	std::vector<Token> _tokens;
 
 	CreateStatement parseCreateStatement();
+	InsertStatement parseInsertStatement();
 
 	// helpers
-	Token expect(TokenType type, std::optional<std::string> value = std::nullopt);
+	Token peek();
+	Token consume();
+	std::optional<Token> match(TokenType type, std::string value = "");
+	Token expect(TokenType type, std::string value = "");
 };
+
+static Data resolveData(const Token& literalToken);

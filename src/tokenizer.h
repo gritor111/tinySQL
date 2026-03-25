@@ -9,10 +9,15 @@ enum TokenType {
     KEYWORD,
     IDENTIFIER,
     OPERATOR,
+
     PUNCTUATION,
-    SYMBOL,
-    STRING_LITERAL,
-    NUMBER_LITERAL
+
+    LITERAL,
+
+    DATA_TYPE,
+
+    END_OF_QUERY,
+    UNKOWN
 };
 
 struct Token
@@ -40,8 +45,10 @@ private:
 
     const std::unordered_set<std::string> KEYWORDS = {
         "CREATE", "TABLE", "SELECT", "INSERT", "INTO",
-        "DELETE", "FROM", "WHERE", "DROP"
+        "DELETE", "FROM", "WHERE", "DROP", "VALES"
     };
     
     std::string consumeWord();
+    std::string consumeIntLiteral();
+    std::string consumeStringLiteral(const char quoteType);
 };
