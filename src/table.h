@@ -42,6 +42,7 @@ public:
 
 	void addTable(const std::string& tableName, const Table& table);
 	Table& getTable(const std::string& tableName);
+	void removeTable(const std::string& tableName);
 };
 
 

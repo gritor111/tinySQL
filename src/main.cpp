@@ -57,15 +57,14 @@ int main(int argc, char* argv[])
 				continue;
 			}
 
-			else
-			{
-				executeConsoleCommand(line, engine);
-			}
+			executeConsoleCommand(line, engine);
 		}
 		catch (const std::runtime_error& e)
 		{
 			std::cout << e.what() << std::endl;
 		}
+
+		std::cout << std::endl;
 	}
 	
 	return 0;

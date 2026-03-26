@@ -23,6 +23,7 @@ private:
 	void executeCreateStatement(const CreateStatement& statement);
 	void executeInsertStatement(const InsertStatement& statement);
 	void executeSelectStatement(const SelectStatement& statement);
+	void executeDropStatement(const DropStatement& statement);
 };
 
 static bool doTypesMatch(const ColumnType expectedType, const Data& value);

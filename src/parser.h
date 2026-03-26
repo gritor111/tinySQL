@@ -14,7 +14,8 @@ enum StatementType
 {
 	CREATE,
 	INSERT,
-	SELECT
+	SELECT,
+	DROP
 };
 
 enum OpType 
@@ -76,6 +77,15 @@ struct SelectStatement : Statement
 	}
 };
 
+struct DropStatement : Statement
+{
+	std::string tableName;
+
+	DropStatement() : Statement(StatementType::DROP)
+	{
+	}
+};
+
 class Parser
 {
 public:
@@ -89,6 +99,7 @@ private:
 	CreateStatement parseCreateStatement();
 	InsertStatement parseInsertStatement();
 	SelectStatement parseSelectStatement();
+	DropStatement parseDropStatement();
 
 	// helpers
 	Token peek();

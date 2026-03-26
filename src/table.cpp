@@ -101,3 +101,16 @@ Table& Database::getTable(const std::string& tableName)
 
 	return it->second;
 }
+
+/*
+Removes a table from the database, throws error if table does not exist
+input: table name to remove
+output: none
+*/
+void Database::removeTable(const std::string& tableName)
+{
+	if (!_tables.erase(tableName))
+	{
+		throw std::runtime_error("Drop Error: Table '" + tableName + "' does not exist.");
+	}
+}

@@ -31,6 +31,11 @@ std::unique_ptr<Statement> Parser::parse()
 		return std::make_unique<SelectStatement>(parseSelectStatement());
 	}
 
+	if (match(TokenType::KEYWORD, "DROP"))
+	{
+		return std::make_unique<DropStatement>(parseDropStatement());
+	}
+
 	throw std::runtime_error("Syntax Error: Unexpected token " + peek().value + ".");
 
 }
@@ -155,6 +160,22 @@ SelectStatement Parser::parseSelectStatement()
 
 		resultStatement.condition = con;
 	}
+
+	return resultStatement;
+}
+
+/*
+Function to parse an drop query
+input: none
+output: drop statement
+*/
+DropStatement Parser::parseDropStatement()
+{
+	DropStatement resultStatement;
+
+	expect(TokenType::KEYWORD, "TABLE");
+
+	resultStatement.tableName = expect(TokenType::IDENTIFIER).value;
 
 	return resultStatement;
 }

@@ -30,6 +30,9 @@ void Engine::executeStatement(const Statement& statement)
 		executeSelectStatement(static_cast<const SelectStatement&>(statement));
 		break;
 	}
+	case StatementType::DROP:
+		executeDropStatement(static_cast<const DropStatement&>(statement));
+		break;
 	}
 }
 
@@ -184,6 +187,17 @@ void Engine::executeSelectStatement(const SelectStatement& statement)
 		filteredRows.emplace_back(filteredRow);
 	}
 	printSelectResult(colNames, filteredRows);
+}
+
+/*
+Drops a table from the database.
+input: drop statement
+output: none
+*/
+void Engine::executeDropStatement(const DropStatement& statement)
+{
+	_db.removeTable(statement.tableName);
+	std::cout << "Succesfully dropped table '" << statement.tableName << "'!" << std::endl;
 }
 
 /*
