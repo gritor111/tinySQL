@@ -103,7 +103,7 @@ std::string Tokenizer::consumeWord()
 {
 	const size_t start = _pos;
 
-	while (_pos < _query.size() && std::isalpha(_query[_pos]))
+	while (_pos < _query.size() && (std::isalpha(_query[_pos]) || _query[_pos] == '_'))
 	{
 		_pos++;
 	}
