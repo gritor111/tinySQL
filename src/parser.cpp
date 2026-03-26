@@ -19,11 +19,16 @@ std::unique_ptr<Statement> Parser::parse()
 	{
 		return std::make_unique<CreateStatement>(parseCreateStatement());
 	}
-	
+
 	if (match(TokenType::KEYWORD, "INSERT"))
 	{
 		return std::make_unique<InsertStatement>(parseInsertStatement());
 
+	}
+
+	if (match(TokenType::KEYWORD, "SELECT"))
+	{
+		return std::make_unique<SelectStatement>(parseSelectStatement());
 	}
 
 	throw std::runtime_error("Syntax Error: Unexpected token " + peek().value + ".");
@@ -107,6 +112,54 @@ InsertStatement Parser::parseInsertStatement()
 }
 
 /*
+Function to parse an select query, with an optional where clause
+input: none
+output: select statement
+*/
+SelectStatement Parser::parseSelectStatement()
+{
+	SelectStatement resultStatement;
+
+	if (peek().value == "*")
+	{
+		resultStatement.columnNames.emplace_back(expect(TokenType::PUNCTUATION, "*").value);
+	}
+	else
+	{
+		while (true)
+		{
+			resultStatement.columnNames.emplace_back(expect(TokenType::IDENTIFIER).value);
+
+			if (!match(TokenType::PUNCTUATION, ","))
+			{
+				break;
+			}
+
+			if (peek().value == ")")
+			{
+				throw std::runtime_error("Error syntax: Trailing comma found before ')', eg: (name TEXT, )");
+			}
+		}
+	}
+
+	expect(TokenType::KEYWORD, "FROM");
+
+	resultStatement.tableName = expect(TokenType::IDENTIFIER).value;
+
+	if (match(TokenType::KEYWORD, "WHERE"))
+	{
+		Condition con;
+		con.columnName = expect(TokenType::IDENTIFIER).value;
+		con.op = getOperator(expect(TokenType::OPERATOR).value);
+		con.value = resolveData(expect(TokenType::LITERAL));
+
+		resultStatement.condition = con;
+	}
+
+	return resultStatement;
+}
+
+/*
 Returns current token without consuming it
 input: none
 output: tail of tokens (current token)
@@ -180,6 +233,11 @@ input: str literal
 */
 static Data resolveData(const Token& literalToken)
 {
+	if (literalToken.value.empty())
+	{
+		return "";
+	}
+
 	char firstChar = literalToken.value[0];
 
 	if (firstChar == '-' || std::isdigit(firstChar))
@@ -189,4 +247,21 @@ static Data resolveData(const Token& literalToken)
 
 	// after we validate type we can remove quotes
 	return literalToken.value.substr(1, literalToken.value.size() - 2);
+}
+
+/*
+Converts operator string to operator enum.
+input: string of operator
+output: Operator type enum
+*/
+static OpType getOperator(const std::string& op)
+{
+	if (op == "=") return OpType::EQ;
+	if (op == ">") return OpType::GT;
+	if (op == "<") return OpType::LT;
+	if (op == ">=") return OpType::GTE;
+	if (op == "<=") return OpType::LTE;
+	if (op == "!=") return OpType::NEQ;
+
+	throw std::runtime_error("Unkown operator" + op + ".");
 }

@@ -21,7 +21,7 @@ class Table
 public:
 	void addColumn(const std::string& name, ColumnType type);
 	void addRow(const std::vector<Data>& row);
-	size_t getRowsCount() const;
+	std::vector<std::vector<Data>> getRows() const;
 	std::vector<Column> getColumns() const;
 
 private:
@@ -46,3 +46,4 @@ public:
 
 
 ColumnType getColumnType(const std::string& typeStr);
+std::string getTypeString(const ColumnType type);

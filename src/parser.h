@@ -5,13 +5,26 @@
 #include <exception>
 #include <optional>
 #include <string>
+#include <functional>
 
 #include "tokenizer.h"
 #include "table.h"
 
-enum StatementType {
+enum StatementType 
+{
 	CREATE,
-	INSERT
+	INSERT,
+	SELECT
+};
+
+enum OpType 
+{
+	EQ,
+	GT,
+	LT,
+	GTE,
+	LTE,
+	NEQ
 };
 
 struct Statement
@@ -21,6 +34,8 @@ struct Statement
 	Statement(StatementType type) : type(type)
 	{
 	}
+
+	virtual ~Statement() = default;
 };
 
 struct CreateStatement : Statement
@@ -43,6 +58,24 @@ struct InsertStatement : Statement
 	}
 };
 
+struct Condition
+{
+	std::string columnName;
+	OpType op;
+	Data value;
+};
+
+struct SelectStatement : Statement
+{
+	std::vector<std::string> columnNames;
+	std::string tableName;
+	std::optional<Condition> condition;
+
+	SelectStatement() : Statement(StatementType::SELECT)
+	{
+	}
+};
+
 class Parser
 {
 public:
@@ -55,6 +88,7 @@ private:
 
 	CreateStatement parseCreateStatement();
 	InsertStatement parseInsertStatement();
+	SelectStatement parseSelectStatement();
 
 	// helpers
 	Token peek();
@@ -64,3 +98,4 @@ private:
 };
 
 static Data resolveData(const Token& literalToken);
+static OpType getOperator(const std::string& op);

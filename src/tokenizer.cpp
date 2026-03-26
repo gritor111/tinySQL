@@ -60,6 +60,30 @@ std::vector<Token> Tokenizer::tokenize()
 			tokens.emplace_back(TokenType::PUNCTUATION, std::string(1, currChar));
 			_pos++;
 		}
+		else if (currChar == '<' || currChar == '>' || currChar == '!')
+		{
+			if (_pos + 1 < _query.size() && _query[_pos + 1] == '=')
+			{
+				tokens.emplace_back(TokenType::OPERATOR, _query.substr(_pos, 2));
+				_pos += 2;
+				continue;
+			}
+			else if (currChar != '!')
+			{
+				tokens.emplace_back(TokenType::OPERATOR, std::string(1, currChar));
+			}
+			else
+			{
+				tokens.emplace_back(TokenType::UNKOWN, std::string(1, currChar));
+			}
+
+			_pos++;
+		}
+		else if (currChar == '=')
+		{
+			tokens.emplace_back(TokenType::OPERATOR, std::string(1, currChar));
+			_pos++;
+		}
 		else
 		{
 			tokens.emplace_back(TokenType::UNKOWN, std::string(1, currChar));

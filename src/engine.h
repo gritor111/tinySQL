@@ -22,4 +22,8 @@ private:
 
 	void executeCreateStatement(const CreateStatement& statement);
 	void executeInsertStatement(const InsertStatement& statement);
+	void executeSelectStatement(const SelectStatement& statement);
 };
+
+static bool doTypesMatch(const ColumnType expectedType, const Data& value);
+static bool evaluate(const Data& lhs, OpType op, const Data& rhs);

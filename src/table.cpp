@@ -19,6 +19,24 @@ ColumnType getColumnType(const std::string& typeStr)
 	throw std::runtime_error("Unkown column type " + typeStr + ".");
 }
 
+/*
+Return string representation of a column type
+input: column type
+output: string of type
+*/
+std::string getTypeString(const ColumnType type)
+{
+	switch (type)
+	{
+	case ColumnType::INTEGER:
+		return "INTEGER";
+	case ColumnType::TEXT:
+		return "TEXT";
+	default:
+		return "UNKOWN TYPE";
+	}
+}
+
 
 /*
 Function that adds a column to a table.
@@ -40,15 +58,14 @@ void Table::addRow(const std::vector<Data>& row)
 	_rows.emplace_back(row);
 }
 
-
 /*
-Function that gets how many rows the table has.
+Getter for rows
 input: none
-output: count of rows in table
+output: rows in table
 */
-size_t Table::getRowsCount() const
+std::vector<std::vector<Data>> Table::getRows() const
 {
-	return _rows.size();
+	return _rows;
 }
 
 std::vector<Column> Table::getColumns() const
