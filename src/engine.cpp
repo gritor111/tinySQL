@@ -189,9 +189,38 @@ void Engine::executeSelectStatement(const SelectStatement& statement)
 	printSelectResult(colNames, filteredRows);
 }
 
-
+/*
+Executes the delete statement, deletes rows where condition applies.
+input: drop statement
+output: none
+*/
 void Engine::executeDeleteStatement(const DeleteStatement& statement)
 {
+	Table& table = _db.getTable(statement.tableName);
+	const std::vector<Column>& tableColumns = table.getColumns();
+	
+	const Condition con = statement.condition;
+	const std::string& columnName = con.columnName;
+	auto it = std::find_if(tableColumns.begin(), tableColumns.end(), [columnName](const Column& column) {
+		return column.name == columnName;
+		});
+
+	if (it == tableColumns.end())
+	{
+		throw std::runtime_error("Where Error: Column '" + columnName + "' does not exist in table '" + statement.tableName + "'.");
+	}
+
+	size_t conditionColumnIdx = std::distance(tableColumns.begin(), it);
+	if (!doTypesMatch(tableColumns[conditionColumnIdx].type, con.value))
+	{
+		throw std::runtime_error("Where Error: Column '" + columnName + "' expects " + getTypeString(tableColumns[conditionColumnIdx].type) + ".");
+	}
+
+	size_t deletedCount = table.removeRows([&](const std::vector<Data>& row) {
+		return evaluate(row[conditionColumnIdx], con.op, con.value);
+	});
+
+	std::cout << "Delete succesfull, " << deletedCount << " rows deleted!" << std::endl;
 }
 
 /*

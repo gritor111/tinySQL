@@ -73,6 +73,22 @@ std::vector<Column> Table::getColumns() const
 	return _columns;
 }
 
+/*
+Function that removes a row if it matches the given lambda.
+input: lambda to validate rows against
+output: how many rows were removed
+*/
+size_t Table::removeRows(std::function<bool(const std::vector<Data>&)> predicate)
+{
+	auto it	= std::remove_if(_rows.begin(), _rows.end(), predicate);
+
+	const size_t deletedCount = std::distance(it, _rows.end());
+
+	_rows.erase(it, _rows.end());
+
+	return deletedCount;
+}
+
 
 /*
 Adds a table to the database if name does not exist

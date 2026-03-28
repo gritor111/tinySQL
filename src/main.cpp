@@ -59,7 +59,7 @@ int main(int argc, char* argv[])
 
 			executeConsoleCommand(line, engine);
 		}
-		catch (const std::runtime_error& e)
+		catch (const std::exception& e)
 		{
 			std::cout << e.what() << std::endl;
 		}

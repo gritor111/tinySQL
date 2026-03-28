@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <iostream>
 #include <exception>
+#include <functional>
 
 using Data = std::variant<int, std::string>;
 
@@ -23,6 +24,7 @@ public:
 	void addRow(const std::vector<Data>& row);
 	std::vector<std::vector<Data>> getRows() const;
 	std::vector<Column> getColumns() const;
+	size_t removeRows(std::function<bool(const std::vector<Data>&)> predicate);
 
 private:
 	const std::string _name;
