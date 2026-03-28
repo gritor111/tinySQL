@@ -30,6 +30,11 @@ void Engine::executeStatement(const Statement& statement)
 		executeSelectStatement(static_cast<const SelectStatement&>(statement));
 		break;
 	}
+	case StatementType::DELETE:
+	{
+		executeDeleteStatement(static_cast<const DeleteStatement&>(statement));
+		break;
+	}
 	case StatementType::DROP:
 		executeDropStatement(static_cast<const DropStatement&>(statement));
 		break;
@@ -108,31 +113,34 @@ output: none
 */
 void Engine::executeSelectStatement(const SelectStatement& statement)
 {
-	Table table = _db.getTable(statement.tableName);
+	const Table& table = _db.getTable(statement.tableName);
 
 	// validate all columns actually exist
-	std::vector<Column> cols = table.getColumns();
+	std::vector<Column> tableColumns = table.getColumns();
 	std::vector<size_t> keepIndexes{}; // for later
 
-	for (size_t i = 0; i < statement.columnNames.size(); i++)
+	for (const std::string& queryColumnName: statement.columnNames)
 	{
-		const std::string& columnName = statement.columnNames[i];
-
-		if (columnName == "*")
+		// allow for queries such as SELECT *, name FROM users
+		if (queryColumnName == "*")
 		{
-			break;
+			for (size_t i = 0; i < tableColumns.size(); i++)
+			{
+				keepIndexes.emplace_back(i);
+			}
+			continue;
 		}
 
-		auto it = std::find_if(cols.begin(), cols.end(), [columnName](const Column& column) {
-			return column.name == columnName;
+		auto it = std::find_if(tableColumns.begin(), tableColumns.end(), [queryColumnName](const Column& column) {
+			return column.name == queryColumnName;
 		});
 
-		if (it == cols.end())
+		if (it == tableColumns.end())
 		{
-			throw std::runtime_error("Select Error: Table '" + statement.tableName + "' does not have a column named '" + columnName + "'.");
+			throw std::runtime_error("Select Error: Table '" + statement.tableName + "' does not have a column named '" + queryColumnName + "'.");
 		}
 
-		keepIndexes.emplace_back(std::distance(cols.begin(), it));
+		keepIndexes.emplace_back(std::distance(tableColumns.begin(), it));
 	}
 
 	std::vector<std::vector<Data>> selectedRows = table.getRows();
@@ -141,19 +149,19 @@ void Engine::executeSelectStatement(const SelectStatement& statement)
 		size_t conditionColumnIdx = 0;
 		Condition con = statement.condition.value();
 		const std::string& columnName = con.columnName;
-		auto it = std::find_if(cols.begin(), cols.end(), [columnName](const Column& column) {
+		auto it = std::find_if(tableColumns.begin(), tableColumns.end(), [columnName](const Column& column) {
 			return column.name == columnName;
 		});
 		
-		if (it == cols.end())
+		if (it == tableColumns.end())
 		{
 			throw std::runtime_error("Where Error: Column '" + columnName + "' does not exist in table '" + statement.tableName + "'.");
 		}
 
-		conditionColumnIdx = std::distance(cols.begin(), it);
-		if (!doTypesMatch(cols[conditionColumnIdx].type, con.value))
+		conditionColumnIdx = std::distance(tableColumns.begin(), it);
+		if (!doTypesMatch(tableColumns[conditionColumnIdx].type, con.value))
 		{
-			throw std::runtime_error("Where Error: Column '" + columnName + "' expects " + getTypeString(cols[conditionColumnIdx].type) + ".");
+			throw std::runtime_error("Where Error: Column '" + columnName + "' expects " + getTypeString(tableColumns[conditionColumnIdx].type) + ".");
 		}
 
 		selectedRows.clear();
@@ -167,18 +175,10 @@ void Engine::executeSelectStatement(const SelectStatement& statement)
 		}
 	}
 
-	std::vector<std::string> colNames(cols.size());
-
-	if (statement.columnNames[0] == "*")
-	{
-		std::transform(cols.begin(), cols.end(), colNames.begin(), [](const Column& col) { return col.name; });
-		printSelectResult(colNames, selectedRows);
-		return;
-	}
+	std::vector<std::string> colNames{};
 
 	// filter for only wanted columns
-	colNames.clear();
-	std::for_each(keepIndexes.begin(), keepIndexes.end(), [&](const size_t idx) { colNames.emplace_back(cols[idx].name); });
+	std::for_each(keepIndexes.begin(), keepIndexes.end(), [&](const size_t idx) { colNames.emplace_back(tableColumns[idx].name); });
 	std::vector<std::vector<Data>> filteredRows{};
 	for (const std::vector<Data>& row : selectedRows)
 	{
@@ -187,6 +187,11 @@ void Engine::executeSelectStatement(const SelectStatement& statement)
 		filteredRows.emplace_back(filteredRow);
 	}
 	printSelectResult(colNames, filteredRows);
+}
+
+
+void Engine::executeDeleteStatement(const DeleteStatement& statement)
+{
 }
 
 /*

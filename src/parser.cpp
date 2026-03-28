@@ -11,7 +11,7 @@ output: command for engine to act on
 */
 std::unique_ptr<Statement> Parser::parse()
 {
-	Tokenizer::printTokens(_tokens);
+	//Tokenizer::printTokens(_tokens);
 
 	// Get statement type
 
@@ -31,10 +31,16 @@ std::unique_ptr<Statement> Parser::parse()
 		return std::make_unique<SelectStatement>(parseSelectStatement());
 	}
 
+	if (match(TokenType::KEYWORD, "DELETE"))
+	{
+		return std::make_unique<DeleteStatement>(parseDeleteStatement());
+	}
+
 	if (match(TokenType::KEYWORD, "DROP"))
 	{
 		return std::make_unique<DropStatement>(parseDropStatement());
 	}
+
 
 	throw std::runtime_error("Syntax Error: Unexpected token " + peek().value + ".");
 
@@ -125,27 +131,28 @@ SelectStatement Parser::parseSelectStatement()
 {
 	SelectStatement resultStatement;
 
-	if (peek().value == "*")
+	while (true)
 	{
-		resultStatement.columnNames.emplace_back(expect(TokenType::PUNCTUATION, "*").value);
-	}
-	else
-	{
-		while (true)
+		if (peek().value == "*")
+		{
+			resultStatement.columnNames.emplace_back(expect(TokenType::PUNCTUATION, "*").value);
+		}
+		else
 		{
 			resultStatement.columnNames.emplace_back(expect(TokenType::IDENTIFIER).value);
+		}
 
-			if (!match(TokenType::PUNCTUATION, ","))
-			{
-				break;
-			}
+		if (!match(TokenType::PUNCTUATION, ","))
+		{
+			break;
+		}
 
-			if (peek().value == ")")
-			{
-				throw std::runtime_error("Error syntax: Trailing comma found before ')', eg: (name TEXT, )");
-			}
+		if (peek().value == ")")
+		{
+			throw std::runtime_error("Error syntax: Trailing comma found before ')', eg: (name TEXT, )");
 		}
 	}
+	
 
 	expect(TokenType::KEYWORD, "FROM");
 
@@ -176,6 +183,31 @@ DropStatement Parser::parseDropStatement()
 	expect(TokenType::KEYWORD, "TABLE");
 
 	resultStatement.tableName = expect(TokenType::IDENTIFIER).value;
+
+	return resultStatement;
+}
+
+/*
+Function to parse delete query
+input: none
+output: delete statement
+*/
+DeleteStatement Parser::parseDeleteStatement()
+{
+	DeleteStatement resultStatement;
+
+	expect(TokenType::KEYWORD, "FROM");
+
+	resultStatement.tableName = expect(TokenType::IDENTIFIER).value;
+
+	expect(TokenType::KEYWORD, "WHERE");
+
+	Condition con;
+	con.columnName = expect(TokenType::IDENTIFIER).value;
+	con.op = getOperator(expect(TokenType::OPERATOR).value);
+	con.value = resolveData(expect(TokenType::LITERAL));
+
+	resultStatement.condition = con;
 
 	return resultStatement;
 }

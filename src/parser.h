@@ -15,6 +15,7 @@ enum StatementType
 	CREATE,
 	INSERT,
 	SELECT,
+	DELETE,
 	DROP
 };
 
@@ -77,6 +78,16 @@ struct SelectStatement : Statement
 	}
 };
 
+struct DeleteStatement : Statement
+{
+	std::string tableName;
+	Condition condition;
+
+	DeleteStatement() : Statement(StatementType::DELETE)
+	{
+	}
+};
+
 struct DropStatement : Statement
 {
 	std::string tableName;
@@ -100,6 +111,7 @@ private:
 	InsertStatement parseInsertStatement();
 	SelectStatement parseSelectStatement();
 	DropStatement parseDropStatement();
+	DeleteStatement parseDeleteStatement();
 
 	// helpers
 	Token peek();
