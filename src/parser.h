@@ -67,11 +67,18 @@ struct Condition
 	Data value;
 };
 
+struct OrderClause
+{
+	std::string columnName;
+	bool isAsc;
+};
+
 struct SelectStatement : Statement
 {
 	std::vector<std::string> columnNames;
 	std::string tableName;
 	std::optional<Condition> condition;
+	std::optional<OrderClause> orderClause;
 
 	SelectStatement() : Statement(StatementType::SELECT)
 	{

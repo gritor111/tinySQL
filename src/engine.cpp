@@ -175,6 +175,26 @@ void Engine::executeSelectStatement(const SelectStatement& statement)
 		}
 	}
 
+	// handle order by if exists
+	if (statement.orderClause.has_value())
+	{
+		const std::string& columnName = statement.orderClause->columnName;
+		auto it = std::find_if(tableColumns.begin(), tableColumns.end(), [columnName](const Column& column) {
+			return column.name == columnName;
+			});
+
+		if (it == tableColumns.end())
+		{
+			throw std::runtime_error("Where Error: Column '" + columnName + "' does not exist in table '" + statement.tableName + "'.");
+		}
+
+		const size_t orderColIdx = std::distance(tableColumns.begin(), it);
+
+		std::sort(selectedRows.begin(), selectedRows.end(), [&](const std::vector<Data>& row1, const std::vector<Data>& row2) {
+			return statement.orderClause->isAsc ? row1[orderColIdx] > row2[orderColIdx] : row1[orderColIdx] < row2[orderColIdx];
+		});
+	}
+
 	std::vector<std::string> colNames{};
 
 	// filter for only wanted columns

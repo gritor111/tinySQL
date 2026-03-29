@@ -168,6 +168,18 @@ SelectStatement Parser::parseSelectStatement()
 		resultStatement.condition = con;
 	}
 
+	if (match(TokenType::KEYWORD, "ORDER"))
+	{
+		expect(TokenType::KEYWORD, "BY");
+		
+		OrderClause orderClause;
+		orderClause.columnName = expect(TokenType::IDENTIFIER).value;
+		const std::string sortDirection = expect(TokenType::KEYWORD).value;
+		orderClause.isAsc = sortDirection == "ASC";
+
+		resultStatement.orderClause = orderClause;
+	}
+
 	return resultStatement;
 }
 
