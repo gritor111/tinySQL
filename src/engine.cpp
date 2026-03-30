@@ -196,7 +196,7 @@ SelectResult Engine::executeSelectStatement(const SelectStatement& statement)
 		const size_t orderColIdx = std::distance(tableColumns.begin(), it);
 
 		std::sort(selectedRows.begin(), selectedRows.end(), [&](const std::vector<Data>& row1, const std::vector<Data>& row2) {
-			return statement.orderClause->isAsc ? row1[orderColIdx] > row2[orderColIdx] : row1[orderColIdx] < row2[orderColIdx];
+			return statement.orderClause->isAsc ? row1[orderColIdx] < row2[orderColIdx] : row1[orderColIdx] > row2[orderColIdx];
 		});
 	}
 
