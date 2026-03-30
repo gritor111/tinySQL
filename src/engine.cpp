@@ -17,26 +17,35 @@ void Engine::executeStatement(const Statement& statement)
 	{
 	case StatementType::CREATE:
 	{
-		executeCreateStatement(static_cast<const CreateStatement&>(statement));
+		const CreateStatement& createStatement = static_cast<const CreateStatement&>(statement);
+		executeCreateStatement(createStatement);
+		std::cout << "Succesfully created table '" << createStatement.tableName << "'!" << std::endl;
 		break;
 	}
 	case StatementType::INSERT:
 	{
-		executeInsertStatement(static_cast<const InsertStatement&>(statement));
+		const InsertStatement insertStatement = static_cast<const InsertStatement&>(statement);
+		executeInsertStatement(insertStatement);
+		std::cout << "Succesfully added 1 row to table '" << insertStatement.tableName << "'!" << std::endl;
 		break;
 	}
 	case StatementType::SELECT:
 	{
-		executeSelectStatement(static_cast<const SelectStatement&>(statement));
+		const SelectResult& result = executeSelectStatement(static_cast<const SelectStatement&>(statement));
+		printSelectResult(result.columnNames, result.rows);
 		break;
 	}
 	case StatementType::DELETE:
 	{
-		executeDeleteStatement(static_cast<const DeleteStatement&>(statement));
+		const DeleteStatement& deleteStatement = static_cast<const DeleteStatement&>(statement);
+		const size_t deletedCount = executeDeleteStatement(deleteStatement);
+		std::cout << "Delete succesfull, " << deletedCount << " rows deleted!" << std::endl;
 		break;
 	}
 	case StatementType::DROP:
-		executeDropStatement(static_cast<const DropStatement&>(statement));
+		const DropStatement& dropStatement = static_cast<const DropStatement&>(statement);
+		executeDropStatement(dropStatement);
+		std::cout << "Succesfully dropped table '" << dropStatement.tableName << "'!" << std::endl;
 		break;
 	}
 }
@@ -70,8 +79,6 @@ void Engine::executeCreateStatement(const CreateStatement& statement)
 	}
 	
 	_db.addTable(statement.tableName, newTable);
-
-	std::cout << "Succesfully created table '" << statement.tableName << "'!" << std::endl;
 }
 
 /*
@@ -101,8 +108,6 @@ void Engine::executeInsertStatement(const InsertStatement& statement)
 	}
 
 	table.addRow(statement.values);
-
-	std::cout << "Succesfully added 1 row to table '" << statement.tableName << "'!" << std::endl;
 }
 
 
@@ -111,7 +116,7 @@ Executes the select statement, prints retrieved rows.
 input: select statement
 output: none
 */
-void Engine::executeSelectStatement(const SelectStatement& statement)
+SelectResult Engine::executeSelectStatement(const SelectStatement& statement)
 {
 	const Table& table = _db.getTable(statement.tableName);
 
@@ -206,15 +211,16 @@ void Engine::executeSelectStatement(const SelectStatement& statement)
 		std::for_each(keepIndexes.begin(), keepIndexes.end(), [&](const size_t columnIdx) { filteredRow.emplace_back(row[columnIdx]); });
 		filteredRows.emplace_back(filteredRow);
 	}
-	printSelectResult(colNames, filteredRows);
+
+	return { colNames, filteredRows };
 }
 
 /*
 Executes the delete statement, deletes rows where condition applies.
 input: drop statement
-output: none
+output: amount of rows deleted
 */
-void Engine::executeDeleteStatement(const DeleteStatement& statement)
+size_t Engine::executeDeleteStatement(const DeleteStatement& statement)
 {
 	Table& table = _db.getTable(statement.tableName);
 	const std::vector<Column>& tableColumns = table.getColumns();
@@ -236,11 +242,9 @@ void Engine::executeDeleteStatement(const DeleteStatement& statement)
 		throw std::runtime_error("Where Error: Column '" + columnName + "' expects " + getTypeString(tableColumns[conditionColumnIdx].type) + ".");
 	}
 
-	size_t deletedCount = table.removeRows([&](const std::vector<Data>& row) {
+	return table.removeRows([&](const std::vector<Data>& row) {
 		return evaluate(row[conditionColumnIdx], con.op, con.value);
 	});
-
-	std::cout << "Delete succesfull, " << deletedCount << " rows deleted!" << std::endl;
 }
 
 /*
@@ -251,7 +255,6 @@ output: none
 void Engine::executeDropStatement(const DropStatement& statement)
 {
 	_db.removeTable(statement.tableName);
-	std::cout << "Succesfully dropped table '" << statement.tableName << "'!" << std::endl;
 }
 
 /*

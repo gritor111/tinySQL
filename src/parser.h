@@ -85,6 +85,12 @@ struct SelectStatement : Statement
 	}
 };
 
+struct SelectResult
+{
+	std::vector<std::string> columnNames;
+	std::vector<std::vector<Data>> rows;
+};
+
 struct DeleteStatement : Statement
 {
 	std::string tableName;
