@@ -16,6 +16,7 @@ class Engine
 public:
 	Engine(const std::string& dbName);
 	void executeStatement(const Statement& statement);
+	SelectResult executeSelectStatement(const SelectStatement& statement);
 	std::unordered_map<std::string, Table> Engine::getTables() const;
 
 private:
@@ -23,7 +24,6 @@ private:
 
 	void executeCreateStatement(const CreateStatement& statement);
 	void executeInsertStatement(const InsertStatement& statement);
-	SelectResult executeSelectStatement(const SelectStatement& statement);
 	size_t executeDeleteStatement(const DeleteStatement& statement);
 	void executeDropStatement(const DropStatement& statement);
 };
