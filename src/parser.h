@@ -67,6 +67,11 @@ struct Condition
 	Data value;
 };
 
+struct WhereClause
+{
+	std::vector<std::vector<Condition>> conditionGroups;
+};
+
 struct OrderClause
 {
 	std::string columnName;
@@ -77,8 +82,8 @@ struct SelectStatement : Statement
 {
 	std::vector<std::string> columnNames;
 	std::string tableName;
-	std::optional<Condition> condition;
-	std::optional<OrderClause> orderClause;
+	std::optional<WhereClause> where;
+	std::optional<OrderClause> order;
 
 	SelectStatement() : Statement(StatementType::SELECT)
 	{
@@ -94,7 +99,7 @@ struct SelectResult
 struct DeleteStatement : Statement
 {
 	std::string tableName;
-	Condition condition;
+	WhereClause where;
 
 	DeleteStatement() : Statement(StatementType::DELETE)
 	{
@@ -127,6 +132,7 @@ private:
 	DeleteStatement parseDeleteStatement();
 
 	// helpers
+	WhereClause parseWhereClause();
 	Token peek();
 	Token consume();
 	std::optional<Token> match(TokenType type, std::string value = "");

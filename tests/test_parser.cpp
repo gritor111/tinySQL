@@ -75,10 +75,18 @@ TEST(ParserTest, Select)
         {TokenType::IDENTIFIER,  "age"},
         {TokenType::OPERATOR,    ">="},
         {TokenType::LITERAL,     "18"},
+        {TokenType::KEYWORD,     "AND"},
+        {TokenType::IDENTIFIER,  "name"},
+        {TokenType::OPERATOR,    ">"},
+        {TokenType::LITERAL,     "'b'"},
+        {TokenType::KEYWORD,     "OR"},
+        {TokenType::IDENTIFIER,  "name"},
+        {TokenType::OPERATOR,    "="},
+        {TokenType::LITERAL,     "'Alon'"},
         {TokenType::KEYWORD,     "ORDER"},
         {TokenType::KEYWORD,     "BY"},
         {TokenType::IDENTIFIER,  "age"},
-        {TokenType::KEYWORD,     "DESC"},
+        {TokenType::KEYWORD,     "DESC"}
     };
 
     Parser parser(tokens);
@@ -91,13 +99,22 @@ TEST(ParserTest, Select)
     EXPECT_EQ(select.columnNames[0], "id");
     EXPECT_EQ(select.columnNames[1], "name");
     EXPECT_EQ(select.columnNames[2], "age");
-    ASSERT_TRUE(select.condition.has_value());
-    EXPECT_EQ(select.condition->columnName, "age");
-    EXPECT_EQ(select.condition->op, OpType::GTE);
-    EXPECT_EQ(std::get<INTEGER>(select.condition->value), 18);
-    ASSERT_TRUE(select.orderClause.has_value());
-    EXPECT_EQ(select.orderClause->columnName, "age");
-    EXPECT_FALSE(select.orderClause->isAsc);
+    ASSERT_TRUE(select.where.has_value());
+    ASSERT_TRUE(select.where->conditionGroups.size(), 2);
+    ASSERT_TRUE(select.where->conditionGroups[0].size(), 2);
+    ASSERT_TRUE(select.where->conditionGroups[1].size(), 1);
+    EXPECT_EQ(select.where->conditionGroups[0][0].columnName, "age");
+    EXPECT_EQ(select.where->conditionGroups[0][0].op, OpType::GTE);
+    EXPECT_EQ(std::get<INTEGER>(select.where->conditionGroups[0][0].value), 18);
+    EXPECT_EQ(select.where->conditionGroups[0][1].columnName, "name");
+    EXPECT_EQ(select.where->conditionGroups[0][1].op, OpType::GT);
+    EXPECT_EQ(std::get<TEXT>(select.where->conditionGroups[0][1].value), "b");
+    EXPECT_EQ(select.where->conditionGroups[1][0].columnName, "name");
+    EXPECT_EQ(select.where->conditionGroups[1][0].op, OpType::EQ);
+    EXPECT_EQ(std::get<TEXT>(select.where->conditionGroups[1][0].value), "Alon");
+    ASSERT_TRUE(select.order.has_value());
+    EXPECT_EQ(select.order->columnName, "age");
+    EXPECT_FALSE(select.order->isAsc);
 }
 
 TEST(ParserTest, Delete)
@@ -118,9 +135,11 @@ TEST(ParserTest, Delete)
     DeleteStatement& del = static_cast<DeleteStatement&>(*base);
 
     EXPECT_EQ(del.tableName, "users");
-    EXPECT_EQ(del.condition.columnName, "age");
-    EXPECT_EQ(del.condition.op, OpType::NEQ);
-    EXPECT_EQ(std::get<INTEGER>(del.condition.value), 18);
+    ASSERT_EQ(del.where.conditionGroups.size(), 1);
+    ASSERT_EQ(del.where.conditionGroups[0].size(), 1);
+    EXPECT_EQ(del.where.conditionGroups[0][0].columnName, "age");
+    EXPECT_EQ(del.where.conditionGroups[0][0].op, OpType::NEQ);
+    EXPECT_EQ(std::get<INTEGER>(del.where.conditionGroups[0][0].value), 18);
 }
 
 TEST(ParserTest, Drop)

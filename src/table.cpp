@@ -91,6 +91,26 @@ size_t Table::removeRows(std::function<bool(const std::vector<Data>&)> predicate
 
 
 /*
+Returns index of column in the table.
+input: column name
+output: index of column
+*/
+size_t Table::getColumnIdx(const std::string& name) const
+{
+	auto it = std::find_if(_columns.begin(), _columns.end(), [name](const Column& column) {
+		return column.name == name;
+		});
+
+	if (it == _columns.end())
+	{
+		throw std::runtime_error("Where Error: Column '" + name + "' does not exist in table '" + _name + "'.");
+	}
+
+	return std::distance(_columns.begin(), it);
+}
+
+
+/*
 Adds a table to the database if name does not exist
 */
 void Database::addTable(const std::string& tableName, const Table& table)

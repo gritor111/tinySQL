@@ -4,7 +4,7 @@
 
 TEST(TokenizerTest, Select)
 {
-    Tokenizer tokenizer("SELECT id, name FROM users WHERE age >= 30 ORDER BY id DESC");
+    Tokenizer tokenizer("SELECT id, name FROM users WHERE age >= 30 AND balance >= 100000 ORDER BY id DESC");
     std::vector<Token> tokens = tokenizer.tokenize();
 
     std::vector<Token> expected = {
@@ -18,10 +18,14 @@ TEST(TokenizerTest, Select)
         {TokenType::IDENTIFIER,  "age"},
         {TokenType::OPERATOR,    ">="},
         {TokenType::LITERAL,     "30"},
+        {TokenType::KEYWORD,     "AND"},
+        {TokenType::IDENTIFIER,  "balance"},
+        {TokenType::OPERATOR,    ">="},
+        {TokenType::LITERAL,    "100000"},
         {TokenType::KEYWORD,     "ORDER"},
         {TokenType::KEYWORD,     "BY"},
         {TokenType::IDENTIFIER,  "id"},
-        {TokenType::KEYWORD,     "DESC"}
+        {TokenType::KEYWORD,     "DESC"},
     };
 
     ASSERT_EQ(tokens.size(), expected.size());

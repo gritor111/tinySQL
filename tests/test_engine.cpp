@@ -31,11 +31,29 @@ TEST(EngineTest, FullEngine)
 		insert.values = row;
 		engine.executeStatement(insert);
 	}
+	
+	WhereClause where{};
+
+	std::vector<Condition> currGroup{};
 
 	Condition con{};
 	con.columnName = "age";
 	con.op = OpType::GT;
 	con.value = 18;
+	currGroup.emplace_back(con);
+
+	con.columnName = "balance";
+	con.op = OpType::LTE;
+	con.value = 1000;
+	currGroup.emplace_back(con);
+	where.conditionGroups.emplace_back(currGroup);
+	currGroup.clear();
+
+	con.columnName = "name";
+	con.op = OpType::EQ;
+	con.value = "Gargamel";
+	currGroup.emplace_back(con);
+	where.conditionGroups.emplace_back(currGroup);
 
 	OrderClause order{};
 	order.columnName = "balance";
@@ -47,8 +65,8 @@ TEST(EngineTest, FullEngine)
 		"*",
 		"balance"
 	};
-	select.condition = con;
-	select.orderClause = order;
+	select.where = where;
+	select.order = order;
 
 	const SelectResult& result = engine.executeSelectStatement(select);
 

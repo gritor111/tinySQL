@@ -30,3 +30,4 @@ private:
 
 static bool doTypesMatch(const ColumnType expectedType, const Data& value);
 static bool evaluate(const Data& lhs, OpType op, const Data& rhs);
+static bool evaluateWhereClause(const Table& table, const std::vector<Data>& row, const WhereClause& where);

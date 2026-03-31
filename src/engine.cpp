@@ -148,55 +148,27 @@ SelectResult Engine::executeSelectStatement(const SelectStatement& statement)
 		keepIndexes.emplace_back(std::distance(tableColumns.begin(), it));
 	}
 
-	std::vector<std::vector<Data>> selectedRows = table.getRows();
-	if (statement.condition.has_value())
+	std::vector<std::vector<Data>> rows = table.getRows();
+	std::vector<std::vector<Data>> selectedRows;
+	if (statement.where.has_value())
 	{
-		size_t conditionColumnIdx = 0;
-		Condition con = statement.condition.value();
-		const std::string& columnName = con.columnName;
-		auto it = std::find_if(tableColumns.begin(), tableColumns.end(), [columnName](const Column& column) {
-			return column.name == columnName;
+		std::copy_if(rows.begin(), rows.end(), std::back_inserter(selectedRows), [&](const std::vector<Data>& row) {
+			return evaluateWhereClause(table, row, statement.where.value());
 		});
-		
-		if (it == tableColumns.end())
-		{
-			throw std::runtime_error("Where Error: Column '" + columnName + "' does not exist in table '" + statement.tableName + "'.");
-		}
-
-		conditionColumnIdx = std::distance(tableColumns.begin(), it);
-		if (!doTypesMatch(tableColumns[conditionColumnIdx].type, con.value))
-		{
-			throw std::runtime_error("Where Error: Column '" + columnName + "' expects " + getTypeString(tableColumns[conditionColumnIdx].type) + ".");
-		}
-
-		selectedRows.clear();
-		for (auto& row : table.getRows())
-		{
-			// row match
-			if (evaluate(row[conditionColumnIdx], con.op, con.value))
-			{
-				selectedRows.emplace_back(row);
-			}
-		}
+	}
+	else
+	{
+		selectedRows = rows;
 	}
 
 	// handle order by if exists
-	if (statement.orderClause.has_value())
+	if (statement.order.has_value())
 	{
-		const std::string& columnName = statement.orderClause->columnName;
-		auto it = std::find_if(tableColumns.begin(), tableColumns.end(), [columnName](const Column& column) {
-			return column.name == columnName;
-			});
-
-		if (it == tableColumns.end())
-		{
-			throw std::runtime_error("Where Error: Column '" + columnName + "' does not exist in table '" + statement.tableName + "'.");
-		}
-
-		const size_t orderColIdx = std::distance(tableColumns.begin(), it);
+		const std::string& columnName = statement.order->columnName;
+		const size_t orderColumnIdx = table.getColumnIdx(columnName);
 
 		std::sort(selectedRows.begin(), selectedRows.end(), [&](const std::vector<Data>& row1, const std::vector<Data>& row2) {
-			return statement.orderClause->isAsc ? row1[orderColIdx] < row2[orderColIdx] : row1[orderColIdx] > row2[orderColIdx];
+			return statement.order->isAsc ? row1[orderColumnIdx] < row2[orderColumnIdx] : row1[orderColumnIdx] > row2[orderColumnIdx];
 		});
 	}
 
@@ -225,25 +197,11 @@ size_t Engine::executeDeleteStatement(const DeleteStatement& statement)
 	Table& table = _db.getTable(statement.tableName);
 	const std::vector<Column>& tableColumns = table.getColumns();
 	
-	const Condition con = statement.condition;
-	const std::string& columnName = con.columnName;
-	auto it = std::find_if(tableColumns.begin(), tableColumns.end(), [columnName](const Column& column) {
-		return column.name == columnName;
-		});
+	const WhereClause& where = statement.where;
 
-	if (it == tableColumns.end())
-	{
-		throw std::runtime_error("Where Error: Column '" + columnName + "' does not exist in table '" + statement.tableName + "'.");
-	}
-
-	size_t conditionColumnIdx = std::distance(tableColumns.begin(), it);
-	if (!doTypesMatch(tableColumns[conditionColumnIdx].type, con.value))
-	{
-		throw std::runtime_error("Where Error: Column '" + columnName + "' expects " + getTypeString(tableColumns[conditionColumnIdx].type) + ".");
-	}
 
 	return table.removeRows([&](const std::vector<Data>& row) {
-		return evaluate(row[conditionColumnIdx], con.op, con.value);
+		return evaluateWhereClause(table, row, where);
 	});
 }
 
@@ -277,7 +235,44 @@ static bool doTypesMatch(const ColumnType expectedType, const Data& value)
 }
 
 /*
-Function to evaluate conditions in select, expects lhs and rhs to be the same type, returns false if they are not
+Evaluates a where clause (condition groups) against a row and returns result.
+input: row to check and where clause
+output: if all conditions are true
+*/
+static bool evaluateWhereClause(const Table& table, const std::vector<Data>& row, const WhereClause& where)
+{
+	const std::vector<Column> columns = table.getColumns();
+	for (const std::vector<Condition> group : where.conditionGroups)
+	{
+		bool isAllTrue = true;
+		for (const Condition& con : group)
+		{
+			const size_t columnIdx = table.getColumnIdx(con.columnName);
+			const Data& rowValue = row[columnIdx];
+
+			if (!doTypesMatch(columns[columnIdx].type, con.value))
+			{
+				throw std::runtime_error("Where Error: Column '" + con.columnName + "' expects " + getTypeString(columns[columnIdx].type) + ".");
+			}
+
+			if (!evaluate(row[columnIdx], con.op, con.value))
+			{
+				isAllTrue = false;
+				break;
+			}
+		}
+
+		if (isAllTrue)
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
+/*
+Function to evaluate condition, expects lhs and rhs to be the same type, returns false if they are not
 input: lhs and rhs of the same type, operator type
 output: evaluation of the comparasion
 */

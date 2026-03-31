@@ -25,6 +25,7 @@ public:
 	std::vector<std::vector<Data>> getRows() const;
 	std::vector<Column> getColumns() const;
 	size_t removeRows(std::function<bool(const std::vector<Data>&)> predicate);
+	size_t getColumnIdx(const std::string& name) const;
 
 private:
 	const std::string _name;

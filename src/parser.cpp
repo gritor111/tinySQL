@@ -160,12 +160,7 @@ SelectStatement Parser::parseSelectStatement()
 
 	if (match(TokenType::KEYWORD, "WHERE"))
 	{
-		Condition con;
-		con.columnName = expect(TokenType::IDENTIFIER).value;
-		con.op = getOperator(expect(TokenType::OPERATOR).value);
-		con.value = resolveData(expect(TokenType::LITERAL));
-
-		resultStatement.condition = con;
+		resultStatement.where = parseWhereClause();
 	}
 
 	if (match(TokenType::KEYWORD, "ORDER"))
@@ -177,7 +172,7 @@ SelectStatement Parser::parseSelectStatement()
 		const std::string sortDirection = expect(TokenType::KEYWORD).value;
 		orderClause.isAsc = sortDirection == "ASC";
 
-		resultStatement.orderClause = orderClause;
+		resultStatement.order = orderClause;
 	}
 
 	return resultStatement;
@@ -214,15 +209,54 @@ DeleteStatement Parser::parseDeleteStatement()
 
 	expect(TokenType::KEYWORD, "WHERE");
 
-	Condition con;
-	con.columnName = expect(TokenType::IDENTIFIER).value;
-	con.op = getOperator(expect(TokenType::OPERATOR).value);
-	con.value = resolveData(expect(TokenType::LITERAL));
-
-	resultStatement.condition = con;
+	resultStatement.where = parseWhereClause();
 
 	return resultStatement;
 }
+
+/*
+Helper to parse where clause if exists.
+input: none
+output: where clause
+*/
+WhereClause Parser::parseWhereClause()
+{
+	WhereClause result{};
+	std::vector<Condition> currGroup{};
+
+	while (true)
+	{
+		Condition con;
+		con.columnName = expect(TokenType::IDENTIFIER).value;
+		con.op = getOperator(expect(TokenType::OPERATOR).value);
+		con.value = resolveData(expect(TokenType::LITERAL));
+
+		currGroup.emplace_back(con);
+
+		if (peek().type == TokenType::END_OF_QUERY || peek().value == "ORDER")
+		{
+			if (currGroup.size() > 0)
+			{
+				result.conditionGroups.emplace_back(currGroup);
+			}
+			break;
+		}
+
+		const std::string& logicGate = expect(TokenType::KEYWORD).value;
+		if (logicGate == "OR")
+		{
+			result.conditionGroups.emplace_back(currGroup);
+			currGroup.clear();
+		}
+		else if (logicGate != "AND")
+		{
+			throw std::runtime_error("Syntax Error: Expected AND/OR, got '" + logicGate + "'.");
+		}
+	}
+
+	return result;
+}
+
 
 /*
 Returns current token without consuming it
@@ -290,7 +324,6 @@ Token Parser::expect(TokenType type, std::string value)
 
 	throw std::runtime_error("Syntax Error: expected " + value + " got " + peek().value + " .");
 }
-
 
 /*
 Returns Data (int or std::string) from str representation.
