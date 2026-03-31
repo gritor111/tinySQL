@@ -274,7 +274,7 @@ Token Parser::peek()
 }
 
 /*
-Advances position and returns token at new position
+Advances position and returns token at old position
 input: none
 output: token at next position
 */
