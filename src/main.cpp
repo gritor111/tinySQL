@@ -33,7 +33,7 @@ static void executeConsoleCommand(const std::string& line, Engine& engine)
 
 int main(int argc, char* argv[])
 {
-	Engine engine = Engine("mySQL");
+	Engine engine;
 
 	while (true)
 	{

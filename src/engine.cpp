@@ -1,11 +1,6 @@
 #include "engine.h"
 
 
-Engine::Engine(const std::string& dbName) : _db(dbName)
-{
-}
-
-
 /*
 Recieves a statement object and dispatches it to the correct execute function based off of its type
 input: statement object

@@ -36,12 +36,7 @@ private:
 class Database
 {
 public:
-	const std::string name;
 	std::unordered_map<std::string, Table> _tables;
-
-	Database(const std::string& name) : name(name)
-	{
-	}
 
 	void addTable(const std::string& tableName, const Table& table);
 	Table& getTable(const std::string& tableName);

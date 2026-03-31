@@ -4,7 +4,7 @@
 
 TEST(EngineTest, FullEngine)
 {
-	Engine engine("testDB");
+	Engine engine;
 
 	CreateStatement create{};
 	create.tableName = "users";
