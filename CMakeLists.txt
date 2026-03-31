@@ -23,8 +23,13 @@ add_executable(tinySQL
 )
 
 target_include_directories(tinySQL PRIVATE src)
-target_compile_options(tinySQL PRIVATE /fsanitize=address /Zi)
-target_link_options(tinySQL PRIVATE /fsanitize=address)
+if(MSVC)
+    target_compile_options(tinySQL PRIVATE /fsanitize=address /Zi)
+    target_link_options(tinySQL PRIVATE /fsanitize=address)
+else()
+    target_compile_options(tinySQL PRIVATE -fsanitize=address -g)
+    target_link_options(tinySQL PRIVATE -fsanitize=address)
+endif()
 
 enable_testing()
 
