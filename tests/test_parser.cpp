@@ -100,9 +100,9 @@ TEST(ParserTest, Select)
     EXPECT_EQ(select.columnNames[1], "name");
     EXPECT_EQ(select.columnNames[2], "age");
     ASSERT_TRUE(select.where.has_value());
-    ASSERT_TRUE(select.where->conditionGroups.size(), 2);
-    ASSERT_TRUE(select.where->conditionGroups[0].size(), 2);
-    ASSERT_TRUE(select.where->conditionGroups[1].size(), 1);
+    ASSERT_EQ(select.where->conditionGroups.size(), 2);
+    ASSERT_EQ(select.where->conditionGroups[0].size(), 2);
+    ASSERT_EQ(select.where->conditionGroups[1].size(), 1);
     EXPECT_EQ(select.where->conditionGroups[0][0].columnName, "age");
     EXPECT_EQ(select.where->conditionGroups[0][0].op, OpType::GTE);
     EXPECT_EQ(std::get<INTEGER>(select.where->conditionGroups[0][0].value), 18);
