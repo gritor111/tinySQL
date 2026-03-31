@@ -4,6 +4,8 @@
 #include <vector>
 #include <unordered_set>
 #include <algorithm>
+#include <memory>
+#include <cctype>
 
 enum TokenType {
     KEYWORD,

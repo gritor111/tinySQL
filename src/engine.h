@@ -17,7 +17,7 @@ public:
 	Engine(const std::string& dbName);
 	void executeStatement(const Statement& statement);
 	SelectResult executeSelectStatement(const SelectStatement& statement);
-	std::unordered_map<std::string, Table> Engine::getTables() const;
+	std::unordered_map<std::string, Table> getTables() const;
 
 private:
 	Database _db;

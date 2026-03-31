@@ -6,6 +6,7 @@
 #include <optional>
 #include <string>
 #include <functional>
+#include <memory>
 
 #include "tokenizer.h"
 #include "table.h"

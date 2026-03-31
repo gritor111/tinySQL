@@ -44,7 +44,9 @@ std::vector<Token> Tokenizer::tokenize()
 		{
 			std::string word = consumeWord();
 			std::string upperWord = word;
-			std::transform(word.begin(), word.end(), upperWord.begin(), std::toupper);
+			std::transform(word.begin(), word.end(), upperWord.begin(), [](unsigned char ch) {
+				return std::toupper(ch);
+			});
 
 			if (KEYWORDS.find((upperWord)) != KEYWORDS.end())
 			{
