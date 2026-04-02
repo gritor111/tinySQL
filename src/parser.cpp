@@ -98,7 +98,7 @@ InsertStatement Parser::parseInsertStatement()
 
 	resultStatement.tableName = expect(TokenType::IDENTIFIER).value;
 
-	expect(TokenType::IDENTIFIER, "VALUES");
+	expect(TokenType::KEYWORD, "VALUES");
 	expect(TokenType::PUNCTUATION, "(");
 
 

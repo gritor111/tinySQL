@@ -38,7 +38,7 @@ TEST(ParserTest, Insert)
         {TokenType::KEYWORD,     "INSERT"},
         {TokenType::KEYWORD,     "INTO"},
         {TokenType::IDENTIFIER,  "users"},
-        {TokenType::IDENTIFIER,  "VALUES"},
+        {TokenType::KEYWORD,     "VALUES"},
         {TokenType::PUNCTUATION, "("},
         {TokenType::LITERAL,     "1"},
         {TokenType::PUNCTUATION, ","},

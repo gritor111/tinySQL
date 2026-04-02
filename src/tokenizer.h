@@ -47,7 +47,7 @@ private:
 
     const std::unordered_set<std::string> KEYWORDS = {
         "CREATE", "TABLE", "SELECT", "INSERT", "INTO",
-        "DELETE", "FROM", "WHERE", "DROP", "VALES", 
+        "DELETE", "FROM", "WHERE", "DROP", "VALUES", 
         "ORDER", "BY", "ASC", "DESC", "AND", "OR"
     };
     
