@@ -38,11 +38,18 @@ void Engine::executeStatement(const Statement& statement)
 		break;
 	}
 	case StatementType::DROP:
+	{
 		const DropStatement& dropStatement = static_cast<const DropStatement&>(statement);
 		executeDropStatement(dropStatement);
 		std::cout << "Succesfully dropped table '" << dropStatement.tableName << "'!" << std::endl;
 		break;
 	}
+	default:
+	{
+		throw std::runtime_error("Unkown statement type.");
+	}
+	}
+	
 }
 
 /*
@@ -118,6 +125,7 @@ SelectResult Engine::executeSelectStatement(const SelectStatement& statement)
 	// validate all columns actually exist
 	std::vector<Column> tableColumns = table.getColumns();
 	std::vector<size_t> keepIndexes{}; // for later
+	std::vector<std::string> colNames{};
 
 	for (const std::string& queryColumnName: statement.columnNames)
 	{
@@ -127,6 +135,7 @@ SelectResult Engine::executeSelectStatement(const SelectStatement& statement)
 			for (size_t i = 0; i < tableColumns.size(); i++)
 			{
 				keepIndexes.emplace_back(i);
+				colNames.emplace_back(tableColumns[i].name);
 			}
 			continue;
 		}
@@ -141,6 +150,7 @@ SelectResult Engine::executeSelectStatement(const SelectStatement& statement)
 		}
 
 		keepIndexes.emplace_back(std::distance(tableColumns.begin(), it));
+		colNames.emplace_back(it->name);
 	}
 
 	std::vector<std::vector<Data>> rows = table.getRows();
@@ -167,10 +177,7 @@ SelectResult Engine::executeSelectStatement(const SelectStatement& statement)
 		});
 	}
 
-	std::vector<std::string> colNames{};
-
 	// filter for only wanted columns
-	std::for_each(keepIndexes.begin(), keepIndexes.end(), [&](const size_t idx) { colNames.emplace_back(tableColumns[idx].name); });
 	std::vector<std::vector<Data>> filteredRows{};
 	for (const std::vector<Data>& row : selectedRows)
 	{
